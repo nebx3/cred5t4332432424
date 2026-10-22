@@ -40145,60 +40145,110 @@ local function CredibilityAddWatermark(window)
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.Parent = parent
 
-    local frame = Instance.new("Frame")
-    frame.Name = "Watermark"
-    frame.AnchorPoint = Vector2.new(0.5, 0)
-    frame.Position = UDim2.new(0.5, 0, 0, 7)
-    frame.Size = UDim2.fromOffset(250, 43)
-    frame.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
-    frame.BackgroundTransparency = 0.08
-    frame.BorderSizePixel = 0
-    frame.Active = true
-    frame.ZIndex = 1
-    frame.Parent = gui
+    local labelText = "@" .. player.Name .. " | Credibility"
+    local textService = game:GetService("TextService")
+    local font = Enum.Font.GothamSemibold
+    local textSize = 14
+    local measured = textService:GetTextSize(
+        labelText,
+        textSize,
+        font,
+        Vector2.new(1000, 24)
+    )
+    local contentWidth = measured.X + 8
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 7)
-    corner.Parent = frame
+    -- Compact 26px pill inspired by the reference watermark.
+    local edge = Instance.new("Frame")
+    edge.Name = "Watermark"
+    edge.AnchorPoint = Vector2.new(0.5, 0)
+    edge.Position = UDim2.new(0.5, 0, 0, 7)
+    edge.Size = UDim2.fromOffset(contentWidth + 10, 26)
+    edge.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
+    edge.BackgroundTransparency = 0.04
+    edge.BorderSizePixel = 0
+    edge.Active = true
+    edge.ZIndex = 1
+    edge.Parent = gui
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(124, 58, 237)
-    stroke.Transparency = 0.32
-    stroke.Thickness = 1
-    stroke.Parent = frame
+    local edgeCorner = Instance.new("UICorner")
+    edgeCorner.CornerRadius = UDim.new(0, 3)
+    edgeCorner.Parent = edge
+
+    local edgeStroke = Instance.new("UIStroke")
+    edgeStroke.Color = Color3.fromRGB(124, 58, 237)
+    edgeStroke.Transparency = 0.45
+    edgeStroke.Thickness = 1
+    edgeStroke.Parent = edge
+
+    local background = Instance.new("Frame")
+    background.Name = "Background"
+    background.AnchorPoint = Vector2.new(0.5, 0.5)
+    background.Position = UDim2.new(0.5, 0, 0.5, 0)
+    background.Size = UDim2.new(1, -2, 1, -2)
+    background.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    background.BorderSizePixel = 0
+    background.ClipsDescendants = true
+    background.ZIndex = 2
+    background.Parent = edge
+
+    local backgroundCorner = Instance.new("UICorner")
+    backgroundCorner.CornerRadius = UDim.new(0, 2)
+    backgroundCorner.Parent = background
+
+    local backgroundGradient = Instance.new("UIGradient")
+    backgroundGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 34, 34)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 28, 28)),
+    })
+    backgroundGradient.Rotation = 90
+    backgroundGradient.Parent = background
+
+    local accentBar = Instance.new("Frame")
+    accentBar.Name = "AccentBar"
+    accentBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    accentBar.BorderSizePixel = 0
+    -- Stretch across the full outer box, including the rounded ends.
+    accentBar.Position = UDim2.new(0, -1, 0, 0)
+    accentBar.Size = UDim2.new(1, 2, 0, 2)
+    accentBar.ZIndex = 3
+    accentBar.Parent = edge
+
+    local accentGradient = Instance.new("UIGradient")
+    accentGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 70, 70)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 190, 60)),
+        ColorSequenceKeypoint.new(0.34, Color3.fromRGB(100, 255, 100)),
+        ColorSequenceKeypoint.new(0.51, Color3.fromRGB(70, 220, 255)),
+        ColorSequenceKeypoint.new(0.68, Color3.fromRGB(90, 110, 255)),
+        ColorSequenceKeypoint.new(0.84, Color3.fromRGB(210, 80, 255)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 70, 150)),
+    })
+    accentGradient.Parent = accentBar
 
     local text = Instance.new("TextLabel")
     text.Name = "WatermarkText"
     text.BackgroundTransparency = 1
-    text.Position = UDim2.new(0, 6, 0, 2)
-    text.Size = UDim2.new(1, -12, 0, 20)
-    text.Font = Enum.Font.GothamSemibold
-    text.Text = "@" .. player.Name .. " | Credibility"
-    text.TextColor3 = Color3.fromRGB(240, 235, 250)
-    text.TextSize = 12
+    text.Position = UDim2.new(0, 4, 0, 1)
+    text.Size = UDim2.new(1, -8, 1, -2)
+    text.Font = font
+    text.Text = labelText
+    text.TextColor3 = Color3.fromRGB(198, 198, 198)
+    text.TextSize = textSize
     text.TextXAlignment = Enum.TextXAlignment.Center
+    text.TextYAlignment = Enum.TextYAlignment.Center
+    text.RichText = true
     text.ZIndex = 4
-    text.Parent = frame
+    text.Parent = background
 
-    local logo = Instance.new("ImageLabel")
-    logo.Name = "WatermarkLogo"
-    logo.BackgroundTransparency = 1
-    logo.AnchorPoint = Vector2.new(0.5, 0)
-    logo.Position = UDim2.new(0.5, 0, 0, 23)
-    logo.Size = UDim2.fromOffset(13, 13)
-    logo.Image = CredibilityLogoId
-    logo.ZIndex = 4
-    logo.Parent = frame
-
-    -- Transparent input surface; watermark content remains visible above it.
+    -- Keep the compact watermark draggable.
     local dragHandle = Instance.new("TextButton")
     dragHandle.Name = "DragHandle"
     dragHandle.Text = ""
     dragHandle.AutoButtonColor = false
     dragHandle.BackgroundTransparency = 1
     dragHandle.Size = UDim2.new(1, 0, 1, 0)
-    dragHandle.ZIndex = 3
-    dragHandle.Parent = frame
+    dragHandle.ZIndex = 5
+    dragHandle.Parent = edge
 
     local UserInputService = game:GetService("UserInputService")
     local dragging = false
@@ -40207,13 +40257,12 @@ local function CredibilityAddWatermark(window)
     local startPosition = nil
 
     dragHandle.InputBegan:Connect(function(input)
-        -- The watermark can only be moved while the menu is open.
         if window.Destroyed or window.Closed then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPosition = frame.Position
+            startPosition = edge.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -40232,7 +40281,7 @@ local function CredibilityAddWatermark(window)
     local inputChangedConnection = UserInputService.InputChanged:Connect(function(input)
         if dragging and input == dragInput and dragStart and startPosition then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
+            edge.Position = UDim2.new(
                 startPosition.X.Scale,
                 startPosition.X.Offset + delta.X,
                 startPosition.Y.Scale,
@@ -40278,8 +40327,15 @@ function aa.CreateWindow(self, config)
     end)
     task.wait(0.12) -- allow one frame of the loading panel to render
 
-    local ok, windowOrError = pcall(function()
+    -- Preserve the actual failing call/line instead of rethrowing a plain pcall
+    -- message at this wrapper's line number.
+    local ok, windowOrError = xpcall(function()
         return CredibilityOriginalCreateWindow(aa, normalized)
+    end, function(err)
+        if debug and type(debug.traceback) == "function" then
+            return debug.traceback(tostring(err), 2)
+        end
+        return tostring(err)
     end)
 
     if dismissLoading then
@@ -40287,7 +40343,7 @@ function aa.CreateWindow(self, config)
     end
 
     if not ok then
-        error(windowOrError)
+        error(windowOrError, 0)
     end
 
     local window = windowOrError
