@@ -39956,6 +39956,13 @@ local CredibilityLogoId = "rbxassetid://97331493207218"
 local CredibilityNotificationUrl = "https://raw.githubusercontent.com/Code1Tech/utils/main/notification.lua"
 local CredibilityNotificationLibrary = nil
 local CredibilityNotificationLoadAttempted = false
+local CredibilityRainbowEnabled = false
+local CredibilityOverheadEnabled = true
+local CredibilityOverheadBillboard = nil
+local CredibilityOverheadConnection = nil
+local CredibilityOverheadPlayer = nil
+local CredibilityNotificationGui = nil
+local CredibilityNotificationCards = {}
 
 local function CredibilityLoadNotificationLibrary()
     if CredibilityNotificationLoadAttempted then
@@ -39987,31 +39994,115 @@ local function CredibilityNotify(title, text, duration)
     text = text or "No text provided."
     duration = duration or 3
 
-    local external = CredibilityNotificationLibrary
-    if external and type(external.MakeNotification) == "function" then
-        local ok = pcall(function()
-            external:MakeNotification({
-                Title = title,
-                Text = text,
-                Duration = duration,
-            })
-        end)
-        if ok then
-            return
-        end
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local parent = (player and player:FindFirstChildOfClass("PlayerGui")) or game:GetService("CoreGui")
+    if not CredibilityNotificationGui or not CredibilityNotificationGui.Parent then
+        CredibilityNotificationGui = Instance.new("ScreenGui")
+        CredibilityNotificationGui.Name = "CredibilityNotifications"
+        CredibilityNotificationGui.IgnoreGuiInset = true
+        CredibilityNotificationGui.ResetOnSpawn = false
+        CredibilityNotificationGui.DisplayOrder = 100001
+        CredibilityNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        CredibilityNotificationGui.Parent = parent
     end
 
-    -- Keep a built-in fallback in case the external notification URL is unavailable.
-    if aa and type(aa.Notify) == "function" then
-        pcall(function()
-            aa:Notify({
-                Title = title,
-                Content = text,
-                Duration = duration,
-                Icon = "bell",
-            })
-        end)
+    local card = Instance.new("Frame")
+    card.Name = "NotificationCard"
+    card.Size = UDim2.fromOffset(280, 54)
+    card.AnchorPoint = Vector2.new(0, 1)
+    card.Position = UDim2.new(0, -300, 1, -16)
+    card.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
+    card.BackgroundTransparency = 0.04
+    card.BorderSizePixel = 0
+    card.ClipsDescendants = true
+    card.ZIndex = 10
+    card.Parent = CredibilityNotificationGui
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = card
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(124, 58, 237)
+    stroke.Transparency = 0.35
+    stroke.Thickness = 1
+    stroke.Parent = card
+
+    local strip = Instance.new("Frame")
+    strip.Name = "RainbowLine"
+    strip.BorderSizePixel = 0
+    strip.Size = UDim2.new(1, 0, 0, 2)
+    strip.Position = UDim2.new(0, 0, 0, 0)
+    strip.BackgroundColor3 = Color3.new(1, 1, 1)
+    strip.ZIndex = 12
+    strip.Parent = card
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 70)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 190, 60)),
+        ColorSequenceKeypoint.new(0.34, Color3.fromRGB(100, 255, 100)),
+        ColorSequenceKeypoint.new(0.51, Color3.fromRGB(70, 220, 255)),
+        ColorSequenceKeypoint.new(0.68, Color3.fromRGB(90, 110, 255)),
+        ColorSequenceKeypoint.new(0.84, Color3.fromRGB(210, 80, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150)),
+    })
+    gradient.Parent = strip
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Position = UDim2.fromOffset(11, 7)
+    titleLabel.Size = UDim2.new(1, -22, 0, 17)
+    titleLabel.Font = Enum.Font.GothamSemibold
+    titleLabel.Text = tostring(title)
+    titleLabel.TextColor3 = Color3.fromRGB(248, 245, 255)
+    titleLabel.TextSize = 12
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    titleLabel.ZIndex = 13
+    titleLabel.Parent = card
+
+    local bodyLabel = Instance.new("TextLabel")
+    bodyLabel.BackgroundTransparency = 1
+    bodyLabel.Position = UDim2.fromOffset(11, 25)
+    bodyLabel.Size = UDim2.new(1, -22, 0, 20)
+    bodyLabel.Font = Enum.Font.Gotham
+    bodyLabel.Text = tostring(text)
+    bodyLabel.TextColor3 = Color3.fromRGB(190, 181, 207)
+    bodyLabel.TextSize = 11
+    bodyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    bodyLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    bodyLabel.ZIndex = 13
+    bodyLabel.Parent = card
+
+    table.insert(CredibilityNotificationCards, card)
+    local function reposition()
+        for i, item in ipairs(CredibilityNotificationCards) do
+            if item and item.Parent then
+                local target = UDim2.new(0, 14, 1, -(14 + (i - 1) * 62))
+                game:GetService("TweenService"):Create(item, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = target}):Play()
+            end
+        end
     end
+    reposition()
+    task.delay(math.max(0, duration), function()
+        if not card or not card.Parent then return end
+        for i, item in ipairs(CredibilityNotificationCards) do
+            if item == card then table.remove(CredibilityNotificationCards, i); break end
+        end
+        pcall(function()
+            game:GetService("TweenService"):Create(card, TweenInfo.new(0.18), {
+                Position = UDim2.new(0, -300, 1, -16), BackgroundTransparency = 1
+            }):Play()
+        end)
+        task.delay(0.2, function() if card and card.Parent then card:Destroy() end; reposition() end)
+    end)
+    task.spawn(function()
+        while card and card.Parent do
+            task.wait(0.06)
+            if gradient and gradient.Parent and CredibilityRainbowEnabled then
+                gradient.Rotation = (gradient.Rotation + 3) % 360
+            end
+        end
+    end)
 end
 
 local function CredibilityShowLoadingScreen()
@@ -40128,176 +40219,120 @@ end
 
 
 local function CredibilityAddWatermark(window)
-    local player = game:GetService("Players").LocalPlayer
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
     if not player then return nil end
+    CredibilityOverheadPlayer = player
 
-    local parent = (aa.ScreenGui and aa.ScreenGui.Parent) or game:GetService("CoreGui")
-    pcall(function()
-        local old = parent:FindFirstChild("CredibilityWatermarkGui")
-        if old then old:Destroy() end
-    end)
+    local function attachToCharacter(character)
+        if CredibilityOverheadBillboard then
+            pcall(function() CredibilityOverheadBillboard:Destroy() end)
+            CredibilityOverheadBillboard = nil
+        end
+        if not CredibilityOverheadEnabled or not character then return end
+        local head = character:FindFirstChild("Head") or character:WaitForChild("Head", 5)
+        if not head or not head.Parent then return end
 
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "CredibilityWatermarkGui"
-    gui.IgnoreGuiInset = true
-    gui.ResetOnSpawn = false
-    gui.DisplayOrder = 99998
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.Parent = parent
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "CredibilityOverheadWatermark"
+        billboard.Adornee = head
+        billboard.Size = UDim2.fromOffset(220, 32)
+        billboard.StudsOffset = Vector3.new(0, 2.6, 0)
+        billboard.AlwaysOnTop = true
+        billboard.LightInfluence = 0
+        billboard.MaxDistance = 150
+        billboard.Enabled = CredibilityOverheadEnabled
+        billboard.Parent = player:FindFirstChildOfClass("PlayerGui") or game:GetService("CoreGui")
 
-    local labelText = "@" .. player.Name .. " | Credibility"
-    local textService = game:GetService("TextService")
-    local font = Enum.Font.GothamSemibold
-    local textSize = 14
-    local measured = textService:GetTextSize(
-        labelText,
-        textSize,
-        font,
-        Vector2.new(1000, 24)
-    )
-    local contentWidth = measured.X + 8
+        local edge = Instance.new("Frame")
+        edge.Name = "Pill"
+        edge.Size = UDim2.new(1, 0, 1, 0)
+        edge.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
+        edge.BackgroundTransparency = 0.04
+        edge.BorderSizePixel = 0
+        edge.ClipsDescendants = true
+        edge.Parent = billboard
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 5)
+        corner.Parent = edge
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(124, 58, 237)
+        stroke.Transparency = 0.35
+        stroke.Thickness = 1
+        stroke.Parent = edge
 
-    -- Compact 26px pill inspired by the reference watermark.
-    local edge = Instance.new("Frame")
-    edge.Name = "Watermark"
-    edge.AnchorPoint = Vector2.new(0.5, 0)
-    edge.Position = UDim2.new(0.5, 0, 0, 7)
-    edge.Size = UDim2.fromOffset(contentWidth + 10, 26)
-    edge.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
-    edge.BackgroundTransparency = 0.04
-    edge.BorderSizePixel = 0
-    edge.Active = true
-    edge.ZIndex = 1
-    edge.Parent = gui
+        local line = Instance.new("Frame")
+        line.Name = "RainbowLine"
+        line.Size = UDim2.new(1, 0, 0, 2)
+        line.BackgroundColor3 = Color3.new(1, 1, 1)
+        line.BorderSizePixel = 0
+        line.ZIndex = 2
+        line.Parent = edge
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 70)),
+            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 190, 60)),
+            ColorSequenceKeypoint.new(0.34, Color3.fromRGB(100, 255, 100)),
+            ColorSequenceKeypoint.new(0.51, Color3.fromRGB(70, 220, 255)),
+            ColorSequenceKeypoint.new(0.68, Color3.fromRGB(90, 110, 255)),
+            ColorSequenceKeypoint.new(0.84, Color3.fromRGB(210, 80, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150)),
+        })
+        gradient.Parent = line
 
-    local edgeCorner = Instance.new("UICorner")
-    edgeCorner.CornerRadius = UDim.new(0, 3)
-    edgeCorner.Parent = edge
+        local label = Instance.new("TextLabel")
+        label.Name = "WatermarkText"
+        label.BackgroundTransparency = 1
+        label.Position = UDim2.new(0, 6, 0, 3)
+        label.Size = UDim2.new(1, -12, 1, -5)
+        label.Font = Enum.Font.GothamSemibold
+        label.Text = player.Name .. " | Credibility User"
+        label.TextColor3 = Color3.fromRGB(224, 218, 236)
+        label.TextSize = 12
+        label.TextScaled = false
+        label.TextTruncate = Enum.TextTruncate.AtEnd
+        label.TextXAlignment = Enum.TextXAlignment.Center
+        label.TextYAlignment = Enum.TextYAlignment.Center
+        label.ZIndex = 3
+        label.Parent = edge
 
-    local edgeStroke = Instance.new("UIStroke")
-    edgeStroke.Color = Color3.fromRGB(124, 58, 237)
-    edgeStroke.Transparency = 0.45
-    edgeStroke.Thickness = 1
-    edgeStroke.Parent = edge
-
-    local background = Instance.new("Frame")
-    background.Name = "Background"
-    background.AnchorPoint = Vector2.new(0.5, 0.5)
-    background.Position = UDim2.new(0.5, 0, 0.5, 0)
-    background.Size = UDim2.new(1, -2, 1, -2)
-    background.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    background.BorderSizePixel = 0
-    background.ClipsDescendants = true
-    background.ZIndex = 2
-    background.Parent = edge
-
-    local backgroundCorner = Instance.new("UICorner")
-    backgroundCorner.CornerRadius = UDim.new(0, 2)
-    backgroundCorner.Parent = background
-
-    local backgroundGradient = Instance.new("UIGradient")
-    backgroundGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 34, 34)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 28, 28)),
-    })
-    backgroundGradient.Rotation = 90
-    backgroundGradient.Parent = background
-
-    local accentBar = Instance.new("Frame")
-    accentBar.Name = "AccentBar"
-    accentBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    accentBar.BorderSizePixel = 0
-    -- Stretch across the full outer box, including the rounded ends.
-    accentBar.Position = UDim2.new(0, -1, 0, 0)
-    accentBar.Size = UDim2.new(1, 2, 0, 2)
-    accentBar.ZIndex = 3
-    accentBar.Parent = edge
-
-    local accentGradient = Instance.new("UIGradient")
-    accentGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 70, 70)),
-        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 190, 60)),
-        ColorSequenceKeypoint.new(0.34, Color3.fromRGB(100, 255, 100)),
-        ColorSequenceKeypoint.new(0.51, Color3.fromRGB(70, 220, 255)),
-        ColorSequenceKeypoint.new(0.68, Color3.fromRGB(90, 110, 255)),
-        ColorSequenceKeypoint.new(0.84, Color3.fromRGB(210, 80, 255)),
-        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 70, 150)),
-    })
-    accentGradient.Parent = accentBar
-
-    local text = Instance.new("TextLabel")
-    text.Name = "WatermarkText"
-    text.BackgroundTransparency = 1
-    text.Position = UDim2.new(0, 4, 0, 1)
-    text.Size = UDim2.new(1, -8, 1, -2)
-    text.Font = font
-    text.Text = labelText
-    text.TextColor3 = Color3.fromRGB(198, 198, 198)
-    text.TextSize = textSize
-    text.TextXAlignment = Enum.TextXAlignment.Center
-    text.TextYAlignment = Enum.TextYAlignment.Center
-    text.RichText = true
-    text.ZIndex = 4
-    text.Parent = background
-
-    -- Keep the compact watermark draggable.
-    local dragHandle = Instance.new("TextButton")
-    dragHandle.Name = "DragHandle"
-    dragHandle.Text = ""
-    dragHandle.AutoButtonColor = false
-    dragHandle.BackgroundTransparency = 1
-    dragHandle.Size = UDim2.new(1, 0, 1, 0)
-    dragHandle.ZIndex = 5
-    dragHandle.Parent = edge
-
-    local UserInputService = game:GetService("UserInputService")
-    local dragging = false
-    local dragInput = nil
-    local dragStart = nil
-    local startPosition = nil
-
-    dragHandle.InputBegan:Connect(function(input)
-        if window.Destroyed or window.Closed then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPosition = edge.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+        CredibilityOverheadBillboard = billboard
+        task.spawn(function()
+            while billboard.Parent and not window.Destroyed do
+                task.wait(0.06)
+                if gradient and gradient.Parent and CredibilityRainbowEnabled then
+                    gradient.Rotation = (gradient.Rotation + 3) % 360
                 end
-            end)
-        end
+            end
+        end)
+    end
+
+    if CredibilityOverheadConnection then
+        CredibilityOverheadConnection:Disconnect()
+        CredibilityOverheadConnection = nil
+    end
+    attachToCharacter(player.Character)
+    CredibilityOverheadConnection = player.CharacterAdded:Connect(function(character)
+        task.wait(0.25)
+        attachToCharacter(character)
     end)
 
-    dragHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
+    -- Return the billboard so the existing window cleanup can safely destroy it.
+    return CredibilityOverheadBillboard
+end
 
-    local inputChangedConnection = UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput and dragStart and startPosition then
-            local delta = input.Position - dragStart
-            edge.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
-            )
+local function CredibilitySetOverheadEnabled(enabled, window)
+    CredibilityOverheadEnabled = enabled == true
+    if not CredibilityOverheadPlayer then return end
+    if CredibilityOverheadEnabled then
+        if window and CredibilityOverheadPlayer.Character then
+            -- Rebuild on the current character using the same watermark builder.
+            CredibilityAddWatermark(window)
         end
-    end)
-
-    gui.Destroying:Connect(function()
-        if inputChangedConnection then
-            inputChangedConnection:Disconnect()
-            inputChangedConnection = nil
-        end
-    end)
-
-    return gui
+    elseif CredibilityOverheadBillboard then
+        pcall(function() CredibilityOverheadBillboard:Destroy() end)
+        CredibilityOverheadBillboard = nil
+    end
 end
 
 local CredibilityOriginalCreateWindow = aa.CreateWindow
@@ -40383,6 +40418,7 @@ function aa.CreateWindow(self, config)
                 if not aa.Themes[themeName] then return end
                 currentThemeName = themeName
                 rainbowEnabled = false
+                CredibilityRainbowEnabled = false
                 if rainbowToggle then
                     pcall(function() rainbowToggle:Set(false) end)
                 end
@@ -40396,9 +40432,19 @@ function aa.CreateWindow(self, config)
             Value = false,
             Callback = function(enabled)
                 rainbowEnabled = enabled == true
+                CredibilityRainbowEnabled = rainbowEnabled
                 if not rainbowEnabled then
                     aa:SetTheme(currentThemeName)
                 end
+            end,
+        })
+
+        settingsTab:Toggle({
+            Title = "Head Watermark",
+            Desc = "Show or hide the Credibility tag above your character.",
+            Value = true,
+            Callback = function(enabled)
+                CredibilitySetOverheadEnabled(enabled, window)
             end,
         })
 
@@ -40408,6 +40454,7 @@ function aa.CreateWindow(self, config)
             Callback = function()
                 currentThemeName = "Purple"
                 rainbowEnabled = false
+                CredibilityRainbowEnabled = false
                 if rainbowToggle then
                     pcall(function() rainbowToggle:Set(false) end)
                 end
@@ -40451,6 +40498,14 @@ function aa.CreateWindow(self, config)
         if watermarkGui and watermarkGui.Parent then
             watermarkGui:Destroy()
         end
+        if CredibilityOverheadBillboard and CredibilityOverheadBillboard.Parent then
+            CredibilityOverheadBillboard:Destroy()
+            CredibilityOverheadBillboard = nil
+        end
+        if CredibilityOverheadConnection then
+            CredibilityOverheadConnection:Disconnect()
+            CredibilityOverheadConnection = nil
+        end
     end)
 
     local UserInputService = game:GetService("UserInputService")
@@ -40475,12 +40530,7 @@ function aa.CreateWindow(self, config)
         end)
     end)
 
-    -- Warm up the requested external notifier asynchronously; the built-in fallback is used if it fails.
-    if type(CredibilityLoadNotificationLibrary) == "function" then
-        task.spawn(function()
-            pcall(CredibilityLoadNotificationLibrary)
-        end)
-    end
+    -- Notifications are rendered by Credibility's own bottom-left pill UI.
     task.delay(0.25, function()
         if not window.Destroyed then
             CredibilityNotify("Credibility", "Loaded. Press K to open or close the menu.", 4)
