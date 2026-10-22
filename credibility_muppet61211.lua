@@ -40236,7 +40236,7 @@ local function CredibilityAddWatermark(window)
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "CredibilityOverheadWatermark"
         billboard.Adornee = head
-        billboard.Size = UDim2.fromOffset(220, 32)
+        billboard.Size = UDim2.fromOffset(205, 29)
         billboard.StudsOffset = Vector3.new(0, 2.6, 0)
         billboard.AlwaysOnTop = true
         billboard.LightInfluence = 0
@@ -40269,41 +40269,69 @@ local function CredibilityAddWatermark(window)
         line.ZIndex = 2
         line.Parent = edge
         local gradient = Instance.new("UIGradient")
+        -- Use a seamless horizontal rainbow and scroll its offset instead of
+        -- rotating the gradient, which can look like the colors are wobbling.
+        gradient.Rotation = 0
+        gradient.Offset = Vector2.new(0, 0)
         gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 70)),
-            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 190, 60)),
-            ColorSequenceKeypoint.new(0.34, Color3.fromRGB(100, 255, 100)),
-            ColorSequenceKeypoint.new(0.51, Color3.fromRGB(70, 220, 255)),
-            ColorSequenceKeypoint.new(0.68, Color3.fromRGB(90, 110, 255)),
-            ColorSequenceKeypoint.new(0.84, Color3.fromRGB(210, 80, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150)),
+            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 65, 65)),
+            ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 165, 55)),
+            ColorSequenceKeypoint.new(0.32, Color3.fromRGB(255, 235, 65)),
+            ColorSequenceKeypoint.new(0.48, Color3.fromRGB(70, 235, 110)),
+            ColorSequenceKeypoint.new(0.64, Color3.fromRGB(65, 205, 255)),
+            ColorSequenceKeypoint.new(0.80, Color3.fromRGB(105, 95, 255)),
+            ColorSequenceKeypoint.new(0.92, Color3.fromRGB(220, 75, 255)),
+            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 65, 65)),
         })
         gradient.Parent = line
+
+        local logo = Instance.new("ImageLabel")
+        logo.Name = "CredibilityLogo"
+        logo.BackgroundTransparency = 1
+        logo.BorderSizePixel = 0
+        logo.Image = "rbxassetid://82148346144416"
+        logo.ScaleType = Enum.ScaleType.Fit
+        logo.Size = UDim2.fromOffset(13, 13)
+        logo.Position = UDim2.new(0, 7, 0.5, -6)
+        logo.ZIndex = 3
+        logo.Parent = edge
 
         local label = Instance.new("TextLabel")
         label.Name = "WatermarkText"
         label.BackgroundTransparency = 1
-        label.Position = UDim2.new(0, 6, 0, 3)
-        label.Size = UDim2.new(1, -12, 1, -5)
+        label.Position = UDim2.new(0, 25, 0, 2)
+        label.Size = UDim2.new(1, -30, 1, -4)
         label.Font = Enum.Font.GothamSemibold
         label.Text = player.Name .. " | Credibility User"
         label.TextColor3 = Color3.fromRGB(224, 218, 236)
-        label.TextSize = 12
+        label.TextSize = 11
         label.TextScaled = false
         label.TextTruncate = Enum.TextTruncate.AtEnd
-        label.TextXAlignment = Enum.TextXAlignment.Center
+        label.TextXAlignment = Enum.TextXAlignment.Left
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.ZIndex = 3
         label.Parent = edge
 
         CredibilityOverheadBillboard = billboard
         task.spawn(function()
+            local tweenService = game:GetService("TweenService")
+            local tweenInfo = TweenInfo.new(3.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false)
+            local rainbowTween = tweenService:Create(gradient, tweenInfo, {
+                Offset = Vector2.new(1, 0)
+            })
             while billboard.Parent and not window.Destroyed do
-                task.wait(0.06)
-                if gradient and gradient.Parent and CredibilityRainbowEnabled then
-                    gradient.Rotation = (gradient.Rotation + 3) % 360
+                if CredibilityRainbowEnabled then
+                    if rainbowTween.PlaybackState ~= Enum.PlaybackState.Playing then
+                        rainbowTween:Play()
+                    end
+                else
+                    if rainbowTween.PlaybackState == Enum.PlaybackState.Playing then
+                        rainbowTween:Pause()
+                    end
                 end
+                task.wait(0.12)
             end
+            pcall(function() rainbowTween:Cancel() end)
         end)
     end
 
