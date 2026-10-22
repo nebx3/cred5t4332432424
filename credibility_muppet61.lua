@@ -40126,6 +40126,7 @@ local function CredibilityShowLoadingScreen()
     return dismiss
 end
 
+
 local function CredibilityAddWatermark(window)
     local player = game:GetService("Players").LocalPlayer
     if not player then return nil end
@@ -40208,7 +40209,8 @@ local function CredibilityAddWatermark(window)
     dragHandle.InputBegan:Connect(function(input)
         -- The watermark can only be moved while the menu is open.
         if window.Destroyed or window.Closed then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPosition = frame.Position
@@ -40227,10 +40229,9 @@ local function CredibilityAddWatermark(window)
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
+    local inputChangedConnection = UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput and dragStart and startPosition then
             local delta = input.Position - dragStart
-
             frame.Position = UDim2.new(
                 startPosition.X.Scale,
                 startPosition.X.Offset + delta.X,
@@ -40240,9 +40241,15 @@ local function CredibilityAddWatermark(window)
         end
     end)
 
+    gui.Destroying:Connect(function()
+        if inputChangedConnection then
+            inputChangedConnection:Disconnect()
+            inputChangedConnection = nil
+        end
+    end)
+
     return gui
 end
-
 
 local CredibilityOriginalCreateWindow = aa.CreateWindow
 function aa.CreateWindow(self, config)
