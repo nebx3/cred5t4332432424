@@ -40126,20 +40126,6 @@ local function CredibilityShowLoadingScreen()
     return dismiss
 end
 
-local function CredibilityAddTopRightLogo(window)
-    pcall(function()
-        local right = window.UIElements.Main.Main.Topbar.Right
-        local logo = Instance.new("ImageLabel")
-        logo.Name = "CredibilityLogo"
-        logo.BackgroundTransparency = 1
-        logo.Image = CredibilityLogoId
-        logo.Size = UDim2.fromOffset(18, 18)
-        logo.LayoutOrder = 100000
-        logo.ZIndex = 100
-        logo.Parent = right
-    end)
-end
-
 local function CredibilityAddWatermark(window)
     local player = game:GetService("Players").LocalPlayer
     if not player then return nil end
@@ -40162,7 +40148,7 @@ local function CredibilityAddWatermark(window)
     frame.Name = "Watermark"
     frame.AnchorPoint = Vector2.new(0.5, 0)
     frame.Position = UDim2.new(0.5, 0, 0, 7)
-    frame.Size = UDim2.fromOffset(250, 43)
+    frame.Size = UDim2.fromOffset(220, 38)
     frame.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
     frame.BackgroundTransparency = 0.08
     frame.BorderSizePixel = 0
@@ -40171,7 +40157,7 @@ local function CredibilityAddWatermark(window)
     frame.Parent = gui
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 7)
+    corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = frame
 
     local stroke = Instance.new("UIStroke")
@@ -40183,12 +40169,12 @@ local function CredibilityAddWatermark(window)
     local text = Instance.new("TextLabel")
     text.Name = "WatermarkText"
     text.BackgroundTransparency = 1
-    text.Position = UDim2.new(0, 6, 0, 2)
-    text.Size = UDim2.new(1, -12, 0, 20)
+    text.Position = UDim2.new(0, 6, 0, 1)
+    text.Size = UDim2.new(1, -12, 0, 21)
     text.Font = Enum.Font.GothamSemibold
     text.Text = "@" .. player.Name .. " | Credibility"
     text.TextColor3 = Color3.fromRGB(240, 235, 250)
-    text.TextSize = 12
+    text.TextSize = 14
     text.TextXAlignment = Enum.TextXAlignment.Center
     text.ZIndex = 4
     text.Parent = frame
@@ -40198,7 +40184,7 @@ local function CredibilityAddWatermark(window)
     logo.BackgroundTransparency = 1
     logo.AnchorPoint = Vector2.new(0.5, 0)
     logo.Position = UDim2.new(0.5, 0, 0, 23)
-    logo.Size = UDim2.fromOffset(13, 13)
+    logo.Size = UDim2.fromOffset(11, 11)
     logo.Image = CredibilityLogoId
     logo.ZIndex = 4
     logo.Parent = frame
@@ -40222,10 +40208,13 @@ local function CredibilityAddWatermark(window)
     dragHandle.InputBegan:Connect(function(input)
         -- The watermark can only be moved while the menu is open.
         if window.Destroyed or window.Closed then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPosition = frame.Position
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -40235,14 +40224,16 @@ local function CredibilityAddWatermark(window)
     end)
 
     dragHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging and not window.Destroyed and not window.Closed then
+        if dragging and input == dragInput then
             local delta = input.Position - dragStart
+
             frame.Position = UDim2.new(
                 startPosition.X.Scale,
                 startPosition.X.Offset + delta.X,
@@ -40254,6 +40245,7 @@ local function CredibilityAddWatermark(window)
 
     return gui
 end
+
 
 local CredibilityOriginalCreateWindow = aa.CreateWindow
 function aa.CreateWindow(self, config)
