@@ -40126,6 +40126,7 @@ local function CredibilityShowLoadingScreen()
     return dismiss
 end
 
+
 local function CredibilityAddWatermark(window)
     local player = game:GetService("Players").LocalPlayer
     if not player then return nil end
@@ -40148,7 +40149,7 @@ local function CredibilityAddWatermark(window)
     frame.Name = "Watermark"
     frame.AnchorPoint = Vector2.new(0.5, 0)
     frame.Position = UDim2.new(0.5, 0, 0, 7)
-    frame.Size = UDim2.fromOffset(220, 38)
+    frame.Size = UDim2.fromOffset(190, 34)
     frame.BackgroundColor3 = Color3.fromRGB(19, 15, 27)
     frame.BackgroundTransparency = 0.08
     frame.BorderSizePixel = 0
@@ -40169,8 +40170,8 @@ local function CredibilityAddWatermark(window)
     local text = Instance.new("TextLabel")
     text.Name = "WatermarkText"
     text.BackgroundTransparency = 1
-    text.Position = UDim2.new(0, 6, 0, 1)
-    text.Size = UDim2.new(1, -12, 0, 21)
+    text.Position = UDim2.new(0, 6, 0, 0)
+    text.Size = UDim2.new(1, -12, 0, 20)
     text.Font = Enum.Font.GothamSemibold
     text.Text = "@" .. player.Name .. " | Credibility"
     text.TextColor3 = Color3.fromRGB(240, 235, 250)
@@ -40183,8 +40184,8 @@ local function CredibilityAddWatermark(window)
     logo.Name = "WatermarkLogo"
     logo.BackgroundTransparency = 1
     logo.AnchorPoint = Vector2.new(0.5, 0)
-    logo.Position = UDim2.new(0.5, 0, 0, 23)
-    logo.Size = UDim2.fromOffset(11, 11)
+    logo.Position = UDim2.new(0.5, 0, 0, 21)
+    logo.Size = UDim2.fromOffset(10, 10)
     logo.Image = CredibilityLogoId
     logo.ZIndex = 4
     logo.Parent = frame
