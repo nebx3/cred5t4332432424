@@ -40269,7 +40269,13 @@ function aa.CreateWindow(self, config)
     -- We handle K ourselves so the notification can match the open/close state.
     normalized.ToggleKey = nil
 
-    local dismissLoading = CredibilityShowLoadingScreen()
+    -- Optional custom loading UI must never prevent WindUI itself from opening.
+    local dismissLoading = nil
+    pcall(function()
+        if type(CredibilityShowLoadingScreen) == "function" then
+            dismissLoading = CredibilityShowLoadingScreen()
+        end
+    end)
     task.wait(0.12) -- allow one frame of the loading panel to render
 
     local ok, windowOrError = pcall(function()
@@ -40289,8 +40295,14 @@ function aa.CreateWindow(self, config)
         return window
     end
 
-    CredibilityAddTopRightLogo(window)
-    local watermarkGui = CredibilityAddWatermark(window)
+    -- Removed call to undefined CredibilityAddTopRightLogo (caused nil-value error).
+    -- Watermark is an optional enhancement: a watermark error must not break CreateWindow.
+    local watermarkGui = nil
+    pcall(function()
+        if type(CredibilityAddWatermark) == "function" then
+            watermarkGui = CredibilityAddWatermark(window)
+        end
+    end)
 
     local currentThemeName = "Purple"
     local rainbowEnabled = false
@@ -40408,7 +40420,11 @@ function aa.CreateWindow(self, config)
     end)
 
     -- Warm up the requested external notifier asynchronously; the built-in fallback is used if it fails.
-    task.spawn(CredibilityLoadNotificationLibrary)
+    if type(CredibilityLoadNotificationLibrary) == "function" then
+        task.spawn(function()
+            pcall(CredibilityLoadNotificationLibrary)
+        end)
+    end
     task.delay(0.25, function()
         if not window.Destroyed then
             CredibilityNotify("Credibility", "Loaded. Press K to open or close the menu.", 4)
