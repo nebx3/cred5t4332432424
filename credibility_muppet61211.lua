@@ -40289,26 +40289,44 @@ local function CredibilityAddWatermark(window)
         logo.Name = "CredibilityLogo"
         logo.BackgroundTransparency = 1
         logo.BorderSizePixel = 0
+        -- Try the decal asset directly first; the thumbnail URI is a fallback
+        -- for environments where the decal ID does not render as an ImageLabel.
         logo.Image = "rbxassetid://82148346144416"
         logo.ScaleType = Enum.ScaleType.Fit
-        logo.Size = UDim2.fromOffset(13, 13)
-        logo.Position = UDim2.new(0, 7, 0.5, -6)
-        logo.ZIndex = 3
+        logo.Size = UDim2.fromOffset(15, 15)
+        logo.Position = UDim2.new(0, 7, 0.5, -7)
+        logo.ImageTransparency = 0
+        logo.Visible = true
+        logo.ZIndex = 4
         logo.Parent = edge
+        task.spawn(function()
+            local contentProvider = game:GetService("ContentProvider")
+            pcall(function()
+                contentProvider:PreloadAsync({logo})
+            end)
+            if logo.Parent and (not logo.IsLoaded) then
+                logo.Image = "rbxthumb://type=Asset&id=82148346144416&w=150&h=150"
+                pcall(function()
+                    contentProvider:PreloadAsync({logo})
+                end)
+            end
+        end)
 
         local label = Instance.new("TextLabel")
         label.Name = "WatermarkText"
         label.BackgroundTransparency = 1
-        label.Position = UDim2.new(0, 25, 0, 2)
-        label.Size = UDim2.new(1, -30, 1, -4)
-        label.Font = Enum.Font.GothamSemibold
+        label.Position = UDim2.new(0, 27, 0, 2)
+        label.Size = UDim2.new(1, -32, 1, -4)
+        label.Font = Enum.Font.GothamBold
         label.Text = player.Name .. " | Credibility User"
-        label.TextColor3 = Color3.fromRGB(224, 218, 236)
-        label.TextSize = 11
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.TextSize = 12
         label.TextScaled = false
         label.TextTruncate = Enum.TextTruncate.AtEnd
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.TextYAlignment = Enum.TextYAlignment.Center
+        label.TextStrokeColor3 = Color3.fromRGB(10, 8, 15)
+        label.TextStrokeTransparency = 0.65
         label.ZIndex = 3
         label.Parent = edge
 
